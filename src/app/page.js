@@ -2,7 +2,9 @@
 
 import { useState } from "react";
 import { produce } from "immer";
-import Image from "next/image";
+import TextField from "@mui/material/TextField";
+import Button from "@mui/material/Button";
+import Chip from "@mui/material/Chip";
 
 const NewTodoForm = ({ todoStatus }) => {
   const [newTodoTitle, setNewTodoTitle] = useState("");
@@ -22,21 +24,19 @@ const NewTodoForm = ({ todoStatus }) => {
   };
 
   return (
-    <>
-      <div className="flex items-center gap-x-3 m-3">
-        <input
-          className="input input-bordered"
-          type="text"
-          placeholder="새 일정"
-          value={newTodoTitle}
-          onChange={(e) => setNewTodoTitle(e.target.value)}
-          onKeyDown={NewTodoFormKeyDown}
-        />
-        <button className="btn btn-neutral" onClick={addTodo}>
-          추가
-        </button>
-      </div>
-    </>
+    <div className="flex items-center gap-x-3 m-3">
+      <TextField
+        label="새 일정"
+        variant="outlined"
+        value={newTodoTitle}
+        onChange={(e) => setNewTodoTitle(e.target.value)}
+        onKeyDown={NewTodoFormKeyDown}
+        fullWidth
+      />
+      <Button variant="contained" color="primary" onClick={addTodo}>
+        추가
+      </Button>
+    </div>
   );
 };
 
@@ -61,39 +61,38 @@ const TodoListItem = ({ todo, todoStatus }) => {
   };
 
   return (
-    <>
-      <li className="flex items-center gap-x-3 ml-3 mb-3">
-        <span className="badge badge-primary badge-outline">{todo.id}</span>
-        {editMode ? (
-          <>
-            <input
-              type="text"
-              className="input input-bordered"
-              placeholder="수정 내용 써"
-              value={newTodoTitle}
-              onChange={(e) => setNewTodoTitle(e.target.value)}
-            />
-            <button className="btn btn-warning" onClick={modifyTodo}>
-              저장
-            </button>
-            <button className="btn btn-error" onClick={changeEditMode}>
-              취소
-            </button>
-          </>
-        ) : (
-          <>
-            <span>{todo.title}</span>
-            <button className="btn btn-success">메모</button>
-            <button className="btn btn-warning" onClick={changeEditMode}>
-              수정
-            </button>
-            <button className="btn btn-error" onClick={removeTodo}>
-              삭제
-            </button>
-          </>
-        )}
-      </li>
-    </>
+    <li className="flex items-center gap-x-3 ml-3 mb-3">
+      <Chip label={todo.id} color="primary" variant="outlined" />
+      {editMode ? (
+        <>
+          <TextField
+            label="수정 내용"
+            variant="outlined"
+            value={newTodoTitle}
+            onChange={(e) => setNewTodoTitle(e.target.value)}
+          />
+          <Button variant="contained" color="warning" onClick={modifyTodo}>
+            저장
+          </Button>
+          <Button variant="contained" color="error" onClick={changeEditMode}>
+            취소
+          </Button>
+        </>
+      ) : (
+        <>
+          <span>{todo.title}</span>
+          <Button variant="contained" color="success">
+            메모
+          </Button>
+          <Button variant="contained" color="warning" onClick={changeEditMode}>
+            수정
+          </Button>
+          <Button variant="contained" color="error" onClick={removeTodo}>
+            삭제
+          </Button>
+        </>
+      )}
+    </li>
   );
 };
 
