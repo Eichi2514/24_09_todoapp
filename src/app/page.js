@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import produce from "immer";
+import { produce } from "immer";
 import Image from "next/image";
 
 const NewTodoForm = ({ todoStatus }) => {
