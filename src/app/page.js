@@ -24,7 +24,7 @@ const NewTodoForm = ({ todoStatus }) => {
   };
 
   return (
-    <div className="flex items-center gap-x-3 m-3 w-[400px]">
+    <div className="tw-flex tw-items-center tw-gap-x-3 tw-m-3 tw-w-[400px]">
       <TextField
         label="새 일정"
         variant="outlined"
@@ -61,7 +61,7 @@ const TodoListItem = ({ todo, todoStatus }) => {
   };
 
   return (
-    <li className="flex items-center gap-x-3 ml-3 mb-3">
+    <li className="tw-flex tw-items-center tw-gap-x-3 tw-ml-3 tw-mb-3">
       <Chip label={todo.id} color="primary" variant="outlined" />
       {editMode ? (
         <>
@@ -97,10 +97,10 @@ const TodoList = ({ todoStatus }) => {
   return (
     <>
       {todoStatus.todos.length === 0 ? (
-        <h4 className="m-3">오늘 일정 없음</h4>
+        <h4 className="tw-m-3">오늘 일정 없음</h4>
       ) : (
         <>
-          <h4 className="m-3">일정 목록</h4>
+          <h4 className="tw-m-3">일정 목록</h4>
           <ul>
             {todoStatus.todos.map((todo) => (
               <TodoListItem key={todo.id} todo={todo} todoStatus={todoStatus} />
