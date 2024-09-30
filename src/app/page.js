@@ -1,43 +1,30 @@
 'use client';
 
 import * as React from 'react';
-import Button from '@mui/material/Button';
+import { AppBar, Toolbar, Button } from '@mui/material';
 import { ThemeProvider } from '@emotion/react';
-import { RiDeleteBin5Line } from 'react-icons/ri';
+import { FaBars } from 'react-icons/fa';
 import theme from './theme';
 
 export default function Home() {
   return (
     <>
-      <ThemeProvider theme={theme}>
-        <div className="tw-flex tw-items-center tw-gap-x-3">
-          <Button variant="text">Text</Button>
-          <Button
-            variant="contained"
-            onClick={() => {
-              confirm('삭제 할거야?');
-            }}>
-            <RiDeleteBin5Line />
-            삭제
-          </Button>
-          <Button variant="outlined">Outlined</Button>
-        </div>
-      </ThemeProvider>
-      <div className="tw-flex tw-items-center tw-gap-x-3 tw-mt-3">
-        <Button
-          variant="text"
-          onClick={() => {
-            alert('버튼 클릭 됨');
-          }}>
-          Text
-        </Button>
-        <Button variant="contained" disabled>
-          Contained
-        </Button>
-        <Button variant="outlined" href="sub/">
-          sub 로 이동
-        </Button>
-      </div>
+      <AppBar position="fixed">
+        <Toolbar>
+          <div className="tw-flex-1">
+            <FaBars />
+          </div>
+          <div className="logo-box">
+            <a href="/" className="tw-font-bold">
+              로고
+            </a>
+          </div>
+          <div className="tw-flex-1 tw-flex tw-justify-end">글쓰기</div>
+        </Toolbar>
+      </AppBar>
+      <section className="tw-h-screen tw-flex tw-items-center tw-justify-center tw-text-[2rem]">
+        main
+      </section>
     </>
   );
 }
