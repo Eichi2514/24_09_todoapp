@@ -6,6 +6,7 @@ import { TextField, Button, Chip, AppBar, Toolbar, createTheme } from '@mui/mate
 import { ThemeProvider } from '@emotion/react';
 import { FaBars } from 'react-icons/fa';
 import theme from './theme';
+import dateToStr from './dateUtil';
 
 const NewTodoForm = ({ todoStatus }) => {
   const [newTodoTitle, setNewTodoTitle] = React.useState('');
@@ -25,7 +26,7 @@ const NewTodoForm = ({ todoStatus }) => {
   };
 
   return (
-    <div className="tw-flex tw-items-center tw-gap-x-3 tw-m-3 tw-w-[400px]">
+    <div className="tw-flex tw-items-center tw-gap-x-3 tw-m-3">
       <TextField
         label="새 일정"
         variant="outlined"
@@ -99,7 +100,7 @@ const TodoListItem = ({ todo, todoStatus }) => {
         </>
       ) : (
         <>
-          <span>제목 : {todo.title}</span>/<span>{formatDate(todo.regDate)}</span>
+          <span>할 일 : {todo.title}</span>/<span>{formatDate(todo.regDate)}</span>
           <Button variant="contained" color="warning" onClick={changeEditMode}>
             수정
           </Button>
@@ -138,7 +139,7 @@ const useTodoStatus = () => {
   const [todos, setTodos] = React.useState([
     { id: 1, title: 'test1', regDate: '2024-09-29 15:07:41' },
     { id: 2, title: 'test2', regDate: '2024-09-29 15:15:25' },
-    { id: 3, title: 'test3', regDate: '2024-09-29 15:22:58' },
+    { id: 3, title: 'test3', regDate: '2024-09-30 15:22:58' },
   ]);
   const [lastTodoId, setLastTodoId] = React.useState(3);
 
@@ -175,7 +176,7 @@ const useTodoStatus = () => {
   return { todos, addTodo, removeTodo, modifyTodo };
 };
 
-export default function App() {
+export default function ThemeApp() {
   const todoStatus = useTodoStatus();
   const [open, setOpen] = React.useState(false);
 
@@ -206,23 +207,31 @@ export default function App() {
   );
 }
 
-// Util
-// 날짜 객체를 인자로 받아서 문장으로 반환해주는 함수 (yyyy-MM-dd hh:mm:ss)
-function dateToStr(d) {
-  const pad = (n) => {
-    return n < 10 ? '0' + n : n;
-  };
-  return (
-    d.getFullYear() +
-    '-' +
-    pad(d.getMonth() + 1) +
-    '-' +
-    pad(d.getDate()) +
-    ' ' +
-    pad(d.getHours()) +
-    ':' +
-    pad(d.getMinutes()) +
-    ':' +
-    pad(d.getSeconds())
-  );
-}
+// export default function App() {
+//   const todoStatus = useTodoStatus();
+//   const [open, setOpen] = React.useState(false);
+
+//   return (
+//     <>
+//       <AppBar position="fixed">
+//         <Toolbar>
+//           <div className="tw-flex-1">
+//             <FaBars className="tw-cursor-pointer" onClick={() => setOpen(true)} />
+//           </div>
+//           <div className="logo-box">
+//             <a href="/" className="tw-font-bold">
+//               로고
+//             </a>
+//           </div>
+//           <div className="tw-flex-1 tw-flex tw-justify-end">글쓰기</div>
+//         </Toolbar>
+//       </AppBar>
+
+//       <div style={{ paddingTop: '64px' }}>
+//         <NewTodoForm todoStatus={todoStatus} />
+//         <hr />
+//         <TodoList todoStatus={todoStatus} />
+//       </div>
+//     </>
+//   );
+// }
