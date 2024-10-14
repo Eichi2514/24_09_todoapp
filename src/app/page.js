@@ -10,19 +10,22 @@ import {
   CssBaseline,
   Chip,
   Drawer,
+  SwipeableDrawer,
+  List,
+  ListItem,
+  Divider,
+  ListItemButton,
+  Modal,
+  Snackbar,
+  Alert,
   Box,
 } from '@mui/material';
 import { ThemeProvider } from '@emotion/react';
 import classNames from 'classnames';
-import { FaBars, FaCheck, FaEllipsisV } from 'react-icons/fa';
+import { FaBars, FaCheck, FaEllipsisH, FaTrash, FaEllipsisV } from 'react-icons/fa';
+import { FaPenToSquare } from 'react-icons/fa6';
 import dateToStr from './dateUtil';
 import RootTheme from './theme';
-
-/* 
-React 및 @mui/material : React 라이브러리와 Material-UI를 사용하여 UI 구성 요소를 만든다
-react-icons : 아이콘을 추가하기 위해 사용
-dateToStr 및 RootTheme : 날짜 포맷팅 및 사용자 정의 테마를 적용하기 위한 모듈
-*/
 
 function useTodoStatus() {
   const [todos, setTodos] = React.useState([]);
@@ -36,46 +39,71 @@ function useTodoStatus() {
       regDate: dateToStr(new Date()),
     };
     setTodos((todos) => [newTodo, ...todos]);
+
+    return id;
   };
   const removeTodo = (id) => {
     const newTodos = todos.filter((todo) => todo.id != id);
     setTodos(newTodos);
   };
+
+  // modify v1
   const modifyTodo = (id, content) => {
     const newTodos = todos.map((todo) => (todo.id != id ? todo : { ...todo, content }));
     setTodos(newTodos);
   };
+
+  // modify v2
+  const modifyTodoByIndex = (index, newContent) => {
+    const newTodos = todos.map((todo, _index) =>
+      _index != index ? todo : { ...todo, content: newContent },
+    );
+    setTodos(newTodos);
+  };
+  // modify v2
+  const modifyTodoById = (id, newContent) => {
+    const index = findTodoIndexById(id);
+    if (index == -1) {
+      return null;
+    }
+    modifyTodoByIndex(index, newContent);
+  };
+
+  const findTodoIndexById = (id) => {
+    return todos.findIndex((todo) => todo.id == id);
+  };
+  const findTodoById = (id) => {
+    const index = findTodoIndexById(id);
+    if (index == -1) {
+      return null;
+    }
+    return todos[index];
+  };
+
   return {
     todos,
     addTodo,
     removeTodo,
     modifyTodo,
+    findTodoById,
+    modifyTodoById,
   };
 }
 
-/*
-useTodoStatus : Todo 리스트의 상태를 관리하는 커스텀 훅
-todos : 현재 Todo 목록을 상태로 저장
-addTodo : 새로운 Todo를 추가하는 함수
-removeTodo : 주어진 ID의 Todo를 삭제하는 함수
-modifyTodo : 특정 Todo의 내용을 수정하는 함수
-*/
-
-const NewTodoForm = ({ todosState }) => {
-  const formRef = React.useRef(null);
-
+const NewTodoForm = ({ todosState, noticeSnackbarState }) => {
   const onSubmit = (e) => {
     e.preventDefault();
-    const form = formRef.current;
+    const form = e.currentTarget;
     form.content.value = form.content.value.trim();
-    if (form.content.value.length === 0) {
+    if (form.content.value.length == 0) {
       alert('할 일 써');
       form.content.focus();
       return;
     }
-    todosState.addTodo(form.content.value);
+    const newTodoId = todosState.addTodo(form.content.value);
     form.content.value = '';
     form.content.focus();
+    noticeSnackbarState.open(`${newTodoId}번 todo 추가됨`);
   };
 
   const handleKeyDown = (e) => {
@@ -94,30 +122,26 @@ const NewTodoForm = ({ todosState }) => {
   };
 
   return (
-    <form ref={formRef} className="tw-flex tw-flex-col tw-p-4 tw-gap-2" onSubmit={onSubmit}>
-      <TextField
-        multiline
-        maxRows={4}
-        name="content"
-        id="outlined-basic"
-        label="할 일 입력"
-        variant="outlined"
-        autoComplete="off"
-        onKeyDown={handleKeyDown}
-      />
-      <Button className="tw-text-bold" variant="contained" type="submit">
-        추가
-      </Button>
-    </form>
+    <>
+      <form className="tw-flex tw-flex-col tw-p-4 tw-gap-2" onSubmit={(e) => onSubmit(e)}>
+        <TextField
+          multiline
+          maxRows={4}
+          name="content"
+          id="outlined-basic"
+          label="할 일 입력"
+          variant="outlined"
+          autoComplete="off"
+          onKeyDown={handleKeyDown}
+        />
+        <Button className="tw-text-bold" variant="contained" type="submit">
+          추가
+        </Button>
+      </form>
+    </>
   );
 };
-/*
-NewTodoForm : 사용자가 새로운 Todo를 입력하는 폼 컴포넌트
-formRef : 폼 요소에 대한 참조를 저장
-onSubmit : 폼이 제출될 때 호출되며, Todo를 추가하고 입력 필드를 초기화
-handleKeyDown : 키 입력 이벤트를 처리하여 Enter 키가 눌리면 Todo가 제출되고, Shift + Enter로 줄바꿈을 허용
-*/
-const TodoListItem = ({ todo, index, openDrawer }) => {
+const TodoListItem = ({ todo, index, openDrawer, todosState }) => {
   return (
     <>
       <li className="tw-mb-3" key={todo.id}>
@@ -161,11 +185,8 @@ const TodoListItem = ({ todo, index, openDrawer }) => {
     </>
   );
 };
-/*
-TodoListItem : 개별 Todo 항목을 표시하는 컴포넌트
-Chip : Todo의 ID와 날짜를 표시하는 UI 요소
-Button : Todo 완료 체크 및 옵션 드로어를 여는 버튼
-*/
+
+// 해당 todo option에 대한 drawer 열기, 닫기
 function useTodoOptionDrawerStatus() {
   const [todoId, setTodoId] = React.useState(null);
   const opened = React.useMemo(() => todoId !== null, [todoId]);
@@ -179,27 +200,136 @@ function useTodoOptionDrawerStatus() {
     opened,
   };
 }
-/*
-useTodoOptionDrawerStatus: Todo 옵션을 보여주는 드로어의 상태를 관리하는 커스텀 훅
-open 및 close : 드로어를 여는 함수와 닫는 함수
-*/
-const TodoList = ({ todosState }) => {
+
+// modal 열기, 닫기
+function useEditTodoModalStatus() {
+  const [opened, setOpened] = React.useState(false);
+
+  const open = () => {
+    setOpened(true);
+  };
+
+  const close = () => {
+    setOpened(false);
+  };
+
+  return {
+    opened,
+    open,
+    close,
+  };
+}
+
+function EditTodoModal({ status, todosState, todo, noticeSnackbarState }) {
+  const onSubmit = (e) => {
+    e.preventDefault();
+    const form = e.currentTarget;
+    form.content.value = form.content.value.trim();
+    if (form.content.value.length == 0) {
+      alert('할 일 써');
+      form.content.focus();
+      return;
+    }
+    // modify v1
+    todosState.modifyTodo(todo.id, form.content.value);
+    status.close();
+
+    noticeSnackbarState.open(`${todo.id}번 todo 수정됨`);
+
+    // modify v2
+    // todosState.modifyTodoById(todo.id, form.content.value);
+  };
+  return (
+    <>
+      <Modal
+        open={status.opened}
+        onClose={status.close}
+        className="tw-flex tw-justify-center tw-items-center">
+        <div className="tw-bg-white tw-p-10 tw-rounded-[20px] tw-w-full tw-max-w-lg">
+          <form onSubmit={onSubmit} className="tw-flex tw-flex-col tw-gap-2">
+            <TextField
+              minRows={3}
+              maxRows={10}
+              multiline
+              name="content"
+              autoComplete="off"
+              variant="outlined"
+              label="할 일 써"
+              defaultValue={todo?.content}
+            />
+            <Button variant="contained" className="tw-font-bold" type="submit">
+              수정
+            </Button>
+          </form>
+        </div>
+      </Modal>
+    </>
+  );
+}
+
+function TodoOptionDrawer({ status, todosState, noticeSnackbarState }) {
+  const removeTodo = () => {
+    if (confirm(`${status.todoId}번 할 일을 삭제하시겠습니까?`) == false) {
+      status.close();
+      return;
+    }
+    todosState.removeTodo(status.todoId);
+    status.close();
+    noticeSnackbarState.open(`${status.todoId}번 todo 삭제됨`, 'error');
+  };
+
+  const editTodoModalStatus = useEditTodoModalStatus();
+
+  const todo = todosState.findTodoById(status.todoId);
+
+  return (
+    <>
+      <EditTodoModal
+        status={editTodoModalStatus}
+        todosState={todosState}
+        todo={todo}
+        noticeSnackbarState={noticeSnackbarState}
+      />
+      <SwipeableDrawer anchor="top" open={status.opened} onClose={status.close} onOpen={() => {}}>
+        <List>
+          <ListItem className="tw-flex tw-gap-2 tw-p-[15px]">
+            <span className="tw-text-[--mui-color-primary-main]">{todo?.id}번</span>{' '}
+            {/*옵셔널 체이닝*/}
+            <span className="tw-text-[--mui-color-primary-main]">{status.todoId}번 </span>
+            <span>Your Todo</span>
+          </ListItem>
+          <Divider className="tw-my-[5px]" />
+          <ListItemButton
+            onClick={editTodoModalStatus.open}
+            className="tw-p-[15px_20px] tw-flex tw-gap-2 tw-items-center">
+            <span>수정</span>
+            <FaPenToSquare className="block tw-mt-[-5px]" />
+          </ListItemButton>
+          <ListItemButton
+            className="tw-p-[15px_20px] tw-flex tw-gap-2 tw-items-center"
+            onClick={removeTodo}>
+            <span>삭제</span>
+            <FaTrash className="block tw-mt-[-5px]" />
+          </ListItemButton>
+        </List>
+      </SwipeableDrawer>
+    </>
+  );
+}
+
+const TodoList = ({ todosState, noticeSnackbarState }) => {
   const todoOptionDrawerStatus = useTodoOptionDrawerStatus();
 
   return (
     <>
-      <Drawer
-        anchor="bottom"
-        open={todoOptionDrawerStatus.opened}
-        onClose={todoOptionDrawerStatus.close}>
-        <div className="tw-p-[30px] tw-flex tw-gap-x-[5px]">
-          {todoOptionDrawerStatus.todoId}번 todo에 대한 옵션 Drawer
-          <div>수정</div>
-          <div>삭제</div>
-        </div>
-      </Drawer>
-      <div className="tw-mb-2">할 일 갯수 : {todosState.todos.length}</div>
+      <TodoOptionDrawer
+        status={todoOptionDrawerStatus}
+        todosState={todosState}
+        noticeSnackbarState={noticeSnackbarState}
+      />
+
       <nav>
+        할 일 갯수 : {todosState.todos.length}
         <ul>
           {todosState.todos.map((todo, index) => (
             <TodoListItem
@@ -207,6 +337,7 @@ const TodoList = ({ todosState }) => {
               todo={todo}
               index={index}
               openDrawer={todoOptionDrawerStatus.open}
+              todosState={todosState}
             />
           ))}
         </ul>
@@ -214,13 +345,54 @@ const TodoList = ({ todosState }) => {
     </>
   );
 };
-/*
-TodoList : Todo 목록을 표시하는 컴포넌트
-Drawer : 선택된 Todo의 수정 및 삭제 옵션을 보여주는 드로어
-todosState.todos : Todo 항목들을 맵핑하여 각 항목을 TodoListItem으로 표시
-*/
+
+function NoticeSnackbar({ status }) {
+  return (
+    <>
+      <Snackbar
+        open={status.opened}
+        autoHideDuration={status.autoHideDuration}
+        onClose={status.close}>
+        <Alert variant={status.variant} severity={status.severity}>
+          {status.msg}
+        </Alert>
+      </Snackbar>
+    </>
+  );
+}
+function useNoticeSnackbarStatus() {
+  const [opened, setOpened] = React.useState(false);
+  const [autoHideDuration, setAutoHideDuration] = React.useState(null);
+  const [variant, setVariant] = React.useState(null);
+  const [severity, setSeverity] = React.useState(null);
+  const [msg, setMsg] = React.useState(null);
+  const open = (msg, severity = 'success', autoHideDuration = 3000, variant = 'filled') => {
+    setOpened(true);
+    setMsg(msg);
+    setSeverity(severity);
+    setAutoHideDuration(autoHideDuration);
+    setVariant(variant);
+  };
+  const close = () => {
+    setOpened(false);
+  };
+  return {
+    opened,
+    open,
+    close,
+    autoHideDuration,
+    variant,
+    severity,
+    msg,
+  };
+}
+
 function App() {
   const todosState = useTodoStatus();
+
+  const [open, setOpen] = React.useState(false);
+
+  const noticeSnackbarState = useNoticeSnackbarStatus();
 
   React.useEffect(() => {
     todosState.addTodo('스쿼트');
@@ -230,7 +402,12 @@ function App() {
 
   return (
     <>
-      <AppBar position="fixed">
+      <Snackbar open={open} autoHideDuration={4000} onClose={() => setOpen(false)}>
+        <Alert variant="filled" severity="sucess">
+          게시물 삭제됨
+        </Alert>
+      </Snackbar>
+      <AppBar position="fixed" onClick={() => noticeSnackbarState.open('abc')}>
         <Toolbar>
           <div className="tw-flex-1">
             <FaBars onClick={() => setOpen(true)} className="tw-cursor-pointer" />
@@ -244,8 +421,9 @@ function App() {
         </Toolbar>
       </AppBar>
       <Toolbar />
-      <NewTodoForm todosState={todosState} />
-      <TodoList todosState={todosState} />
+      <NoticeSnackbar status={noticeSnackbarState} />
+      <NewTodoForm todosState={todosState} noticeSnackbarState={noticeSnackbarState} />
+      <TodoList todosState={todosState} noticeSnackbarState={noticeSnackbarState} />
     </>
   );
 }
