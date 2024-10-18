@@ -28,11 +28,22 @@ import dateToStr from './dateUtil';
 import RootTheme from './theme';
 
 function useTodoStatus() {
-  const [todos, setTodos] = React.useState([]);
-  const lastTodoIdRef = React.useRef(0);
+  const [todos, setTodos] = React.useState(() => {
+    // localStorage에서 todos 불러오기
+    const storedTodos = localStorage.getItem('todos');
+    return storedTodos ? JSON.parse(storedTodos) : [];
+  });
+
+  React.useEffect(() => {
+    // todos 변경 시 localStorage에 저장
+    localStorage.setItem('todos', JSON.stringify(todos));
+  }, [todos]);
 
   const addTodo = (newContent) => {
-    const id = ++lastTodoIdRef.current;
+    // 기존 todos 중 가장 높은 번호 찾기
+    const maxId = todos.length > 0 ? Math.max(...todos.map((todo) => todo.id)) : 0;
+    const id = maxId + 1; // 가장 큰 번호보다 1 높은 번호 설정
+
     const newTodo = {
       id,
       content: newContent,
@@ -42,39 +53,24 @@ function useTodoStatus() {
 
     return id;
   };
+
   const removeTodo = (id) => {
-    const newTodos = todos.filter((todo) => todo.id != id);
+    const newTodos = todos.filter((todo) => todo.id !== id);
     setTodos(newTodos);
   };
 
-  // modify v1
   const modifyTodo = (id, content) => {
-    const newTodos = todos.map((todo) => (todo.id != id ? todo : { ...todo, content }));
+    const newTodos = todos.map((todo) => (todo.id !== id ? todo : { ...todo, content }));
     setTodos(newTodos);
-  };
-
-  // modify v2
-  const modifyTodoByIndex = (index, newContent) => {
-    const newTodos = todos.map((todo, _index) =>
-      _index != index ? todo : { ...todo, content: newContent },
-    );
-    setTodos(newTodos);
-  };
-  // modify v2
-  const modifyTodoById = (id, newContent) => {
-    const index = findTodoIndexById(id);
-    if (index == -1) {
-      return null;
-    }
-    modifyTodoByIndex(index, newContent);
   };
 
   const findTodoIndexById = (id) => {
-    return todos.findIndex((todo) => todo.id == id);
+    return todos.findIndex((todo) => todo.id === id);
   };
+
   const findTodoById = (id) => {
     const index = findTodoIndexById(id);
-    if (index == -1) {
+    if (index === -1) {
       return null;
     }
     return todos[index];
@@ -86,7 +82,6 @@ function useTodoStatus() {
     removeTodo,
     modifyTodo,
     findTodoById,
-    modifyTodoById,
   };
 }
 
@@ -401,12 +396,6 @@ function App() {
   const [open, setOpen] = React.useState(false);
 
   const noticeSnackbarState = useNoticeSnackbarStatus();
-
-  React.useEffect(() => {
-    todosState.addTodo('스쿼트');
-    todosState.addTodo('벤치프레스');
-    todosState.addTodo('데드리프트\n런지');
-  }, []);
 
   return (
     <>
