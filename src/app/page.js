@@ -91,12 +91,14 @@ function useTodoStatus() {
 }
 
 const NewTodoForm = ({ todosState, noticeSnackbarState }) => {
+  const formRef = React.useRef(null);
+
   const onSubmit = (e) => {
     e.preventDefault();
-    const form = e.currentTarget;
+    const form = formRef.current;
     form.content.value = form.content.value.trim();
-    if (form.content.value.length == 0) {
-      alert('할 일 써');
+    if (form.content.value.length === 0) {
+      alert('할 일을 입력하세요');
       form.content.focus();
       return;
     }
@@ -109,39 +111,41 @@ const NewTodoForm = ({ todosState, noticeSnackbarState }) => {
   const handleKeyDown = (e) => {
     if (e.key === 'Enter') {
       if (e.shiftKey) {
+        return;
       } else {
         e.preventDefault();
         const form = formRef.current;
-        if (form) {
-          form.dispatchEvent(new Event('submit', { cancelable: true, bubbles: true }));
-        } else {
-          console.error('Form not found');
-        }
+        form.dispatchEvent(new Event('submit', { cancelable: true, bubbles: true }));
       }
     }
   };
 
   return (
-    <>
-      <form className="tw-flex tw-flex-col tw-p-4 tw-gap-2" onSubmit={(e) => onSubmit(e)}>
-        <TextField
-          multiline
-          maxRows={4}
-          name="content"
-          id="outlined-basic"
-          label="할 일 입력"
-          variant="outlined"
-          autoComplete="off"
-          onKeyDown={handleKeyDown}
-        />
-        <Button className="tw-text-bold" variant="contained" type="submit">
-          추가
-        </Button>
-      </form>
-    </>
+    <form ref={formRef} className="tw-flex tw-flex-col tw-p-4 tw-gap-2" onSubmit={onSubmit}>
+      <TextField
+        multiline
+        maxRows={4}
+        name="content"
+        id="outlined-basic"
+        label="할 일 입력"
+        variant="outlined"
+        autoComplete="off"
+        onKeyDown={handleKeyDown}
+      />
+      <Button className="tw-text-bold" variant="contained" type="submit">
+        추가
+      </Button>
+    </form>
   );
 };
+
 const TodoListItem = ({ todo, index, openDrawer, todosState }) => {
+  const [isChecked, setIsChecked] = React.useState(false);
+
+  const handleCheckClick = () => {
+    setIsChecked((prev) => !prev); // 클릭 시 색상 상태 토글
+  };
+
   return (
     <>
       <li className="tw-mb-3" key={todo.id}>
@@ -156,14 +160,18 @@ const TodoListItem = ({ todo, index, openDrawer, todosState }) => {
             />
           </div>
           <div className="tw-rounded-[10px] tw-shadow tw-flex tw-text-[14px] tw-min-h-[80px]">
-            <Button className="tw-flex-shrink-0 tw-rounded-[10px_0_0_10px]" color="inherit">
+            <Button
+              className="tw-flex-shrink-0 tw-rounded-[10px_0_0_10px]"
+              color="inherit"
+              onClick={handleCheckClick} // 클릭 핸들러 추가
+            >
               <FaCheck
                 className={classNames(
                   'tw-text-3xl',
                   {
-                    'tw-text-[--mui-color-primary-main]': index % 2 == 0,
+                    'tw-text-[--mui-color-primary-main]': isChecked, // 클릭 시 색상 변경
                   },
-                  { 'tw-text-[#dcdcdc]': index % 2 != 0 },
+                  { 'tw-text-[#dcdcdc]': !isChecked }, // 클릭 안 했을 때 색상
                 )}
               />
             </Button>
